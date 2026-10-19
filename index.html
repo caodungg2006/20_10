@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Dear You – Gửi cậu (by caodung) ." />
+    <title>Dear You</title>
+    <link rel="icon" href="https://github.com/Panbap/anh/blob/main/icon1.png?raw=true" type="image/png" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #fffafa);
+            overflow: hidden;
+            font-family: "Mali", cursive;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* ==========================================
+           CSS MÀN HÌNH NHẬP MẬT KHẨU MỞ ĐẦU
+        ========================================== */
+        body.locked .flowers *,
+        body.locked .grow-ans,
+        body.locked .growing-grass {
+            animation-play-state: paused !important;
+        }
+
+        body.locked .falling-letter {
+            display: none !important;
+        }
+
+        #passcode-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #ffeef2 0%, #ffdde6 100%);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            pointer-events: auto !important;
+        }
+
+        #passcode-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none !important;
+        }
+
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .passcode-card {
+            position: relative;
+            z-index: 10;
+            background: #ffffff;
+            width: 90%;
+            max-width: 310px;
+            padding: 35px 25px 30px;
+            border-radius: 28px;
+            box-shadow: 0 15px 45px rgba(255, 105, 135, 0.18);
+            text-align: center;
+            transition: transform 0.3s ease;
+            pointer-events: auto !important;
+        }
+
+        .passcode-title {
+            color: #ff6b8b;
+            font-size: 1.55rem;
+            font-weight: 700;
+            margin-bottom: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .passcode-dots {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .passcode-dots .dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #ffe3ea;
+            transition: all 0.25s ease;
+        }
+
+        .passcode-dots .dot.active {
+            background: #ff6b8b;
+            box-shadow: 0 0 12px rgba(255, 107, 139, 0.85);
+            transform: scale(1.1);
+        }
+
+        .passcode-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            justify-items: center;
+            pointer-events: auto !important;
+        }
+
+        .passcode-keypad .key {
+            width: 66px;
+            height: 54px;
+            border-radius: 15px;
+            background: #ffffff;
+            border: 1px solid #fff0f3;
+            box-shadow: 0 5px 15px rgba(255, 182, 193, 0.25);
+            font-family: "Mali", cursive;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #6d595e;
+            cursor: pointer !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            outline: none;
+            pointer-events: auto !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .passcode-keypad .key:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 182, 193, 0.4);
+            background: #fffdfd;
+        }
+
+        .passcode-keypad .key:active {
+            transform: scale(0.92);
+            background: #fff0f4;
+        }
+
+        .passcode-keypad .key.empty {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            cursor: default !important;
+            pointer-events: none !important;
+        }
+
+        .passcode-keypad .key.key-del {
+            color: #e74c3c;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .passcode-card.shake {
+            animation: shakeError 0.4s ease;
+        }
+
+        /* ==========================================
+           CSS CHƯƠNG TRÌNH CHÍNH CỦA BẠN
+        ========================================== */
+        .center-message {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 245, 0.9));
+            padding: 40px 50px;
+            border-radius: 30px;
+            font-size: 1.6rem;
+            font-weight: 400;
+            color: #c2185b;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(216, 27, 96, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            z-index: 1;
+            max-width: 90%;
+            animation: pulse 3s ease-in-out infinite;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        .center-message strong {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #d81b60, #f06292, #d81b60);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 3s ease infinite;
+        }
+
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 99;
+            display: none;
+            animation: fadeInOverlay 0.3s ease;
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .overlay.active { display: block; }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%);
+            border-radius: 25px;
+            box-shadow: 0 25px 80px rgba(216, 27, 96, 0.4);
+            padding: 30px;
+            text-align: center;
+            z-index: 100;
+            width: 90%;
+            max-width: 400px;
+            display: none;
+            animation: popupShow 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes popupShow {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-5deg); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+        }
+
+        .popup-content { margin-top: 20px; }
+
+        .popup img {
+            max-width: 100%;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 3px solid white;
+        }
+
+        .popup p {
+            font-size: 1.1rem;
+            color: #d81b60;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .popup button {
+            margin-top: 10px;
+            background: linear-gradient(135deg, #d81b60 0%, #f06292 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 5px 20px rgba(216, 27, 96, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .falling-letter {
+            position: absolute;
+            top: -100px;
+            width: 50px;
+            height: auto;
+            animation: fall linear;
+            cursor: pointer;
+            user-select: none;
+            z-index: 2;
+            animation-duration: 20s;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+            transition: transform 0.3s ease;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+            20% { transform: translateY(20vh) translateX(-20px) rotate(-10deg); }
+            40% { transform: translateY(40vh) translateX(15px) rotate(8deg); }
+            60% { transform: translateY(60vh) translateX(-15px) rotate(-6deg); }
+            80% { transform: translateY(80vh) translateX(10px) rotate(4deg); }
+            100% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0.3; }
+        }
+
+        @keyframes letterClick {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.3) rotate(360deg); }
+            100% { transform: scale(0) rotate(720deg); }
+        }
+
+        .letter-clicked { animation: letterClick 0.6s ease-out forwards !important; }
+
+        .heart {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            animation: explode 2s ease-out forwards;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) translate(0, 0); opacity: 1; }
+            100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(1.5); opacity: 0; }
+        }
+
+        .center-gif {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            max-width: 40vw;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .touch-message {
+            position: fixed;
+            top: 80%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #d63384;
+            padding: 20px 30px;
+            border-radius: 20px;
+            font-size: 23px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            /* Hiệu ứng chuyển động mượt khi bay lên góc phải */
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Khi ấn vào ảnh/thư -> tự động bay lên góc trên bên phải */
+        .touch-message.move-top-right {
+            top: 20px !important;
+            right: 20px !important;
+            left: auto !important;
+            transform: none !important;
+            font-size: 16px !important;
+            padding: 12px 18px !important;
+            text-align: right !important;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 8px 25px rgba(216, 27, 96, 0.25);
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 182, 193, 0.6);
+        }
+
+        .fade-out { opacity: 0 !important; }
+        
+        @media (max-width: 768px) {
+            .center-message {
+                width: calc(100% - 20px);
+                padding: 20px 15px;
+                font-size: 1.1rem;
+                border-radius: 20px;
+            }
+            .center-message strong { font-size: 1.3rem; margin-bottom: 10px; }
+            .popup { width: 90%; padding: 20px; border-radius: 20px; }
+            .falling-letter { width: 40px; animation-duration: 15s; }
+        }
+    </style>
+</head>
+
+<body class="locked">
+    <!-- ==================== MÀN HÌNH NHẬP MẬT KHẨU ==================== -->
+   <div id="passcode-screen">
+        <canvas id="confetti-canvas"></canvas>
+       <div class="passcode-card" id="passcode-card">
+            <div class="passcode-title" style="margin-bottom: 4px;">Password</div>
+            <div class="passcode-subtitle" style="font-size: 0.9rem; color: #ff8da1; font-weight: 500; margin-bottom: 2px;">(nay ngày gì nhờ)</div>
+            <div class="passcode-subtitle" style="font-size: 0.75rem; color: #ff8da1; font-weight: 500; margin-bottom: 20px;">(nhớ bật tiếng nha)</div>
+            <div class="passcode-dots" id="passcode-dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            <div class="passcode-keypad">
+                <button type="button" class="key" onclick="pressKey('1')">1</button>
+                <button type="button" class="key" onclick="pressKey('2')">2</button>
+                <button type="button" class="key" onclick="pressKey('3')">3</button>
+                <button type="button" class="key" onclick="pressKey('4')">4</button>
+                <button type="button" class="key" onclick="pressKey('5')">5</button>
+                <button type="button" class="key" onclick="pressKey('6')">6</button>
+                <button type="button" class="key" onclick="pressKey('7')">7</button>
+                <button type="button" class="key" onclick="pressKey('8')">8</button>
+                <button type="button" class="key" onclick="pressKey('9')">9</button>
+                <div class="key empty"></div>
+                <button type="button" class="key" onclick="pressKey('0')">0</button>
+                <button type="button" class="key key-del" onclick="delKey()">✖</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT XỬ LÝ MẬT KHẨU TRỰC TIẾP -->
+    <script>
+        let currentInput = "";
+        const SECRET_PASS = "2010";
+        let isUnlocked = false;
+
+        function updateDotsUI() {
+            const dots = document.querySelectorAll('#passcode-dots .dot');
+            dots.forEach((dot, idx) => {
+                if (idx < currentInput.length) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function pressKey(num) {
+            if (isUnlocked || currentInput.length >= 4) return;
+            currentInput += num;
+            updateDotsUI();
+
+            if (currentInput.length === 4) {
+                if (currentInput === SECRET_PASS) {
+                    isUnlocked = true;
+                    burstConfetti();
+                    setTimeout(unlockProgram, 350);
+                } else {
+                    const card = document.getElementById('passcode-card');
+                    card.classList.remove('shake');
+                    void card.offsetWidth;
+                    card.classList.add('shake');
+                    setTimeout(() => {
+                        currentInput = "";
+                        updateDotsUI();
+                    }, 450);
+                }
+            }
+        }
+
+        function delKey() {
+            if (isUnlocked || currentInput.length === 0) return;
+            currentInput = currentInput.slice(0, -1);
+            updateDotsUI();
+        }
+
+        function unlockProgram() {
+            const screen = document.getElementById('passcode-screen');
+            screen.classList.add('hidden');
+            document.body.classList.remove('locked');
+
+            // Phát nhạc nền
+            const player = document.getElementById('player');
+            if (player) {
+                player.play().catch(() => {});
+            }
+
+            // Hiển thị chữ "Chạm vào thư nhé" rồi mờ dần
+            const touchMsg = document.getElementById('touchMessage');
+            if (touchMsg) {
+                touchMsg.style.opacity = '1';
+                setTimeout(() => {
+                    touchMsg.classList.add('fade-out');
+                    setTimeout(() => {
+                        touchMsg.style.display = 'none';
+                    }, 1000);
+                }, 20000);
+            }
+        }
+
+        // Hỗ trợ nhập từ bàn phím máy tính
+        window.addEventListener('keydown', function(e) {
+            if (isUnlocked) return;
+            if (e.key >= '0' && e.key <= '9') {
+                pressKey(e.key);
+            } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                delKey();
+            }
+        });
+
+        // Hiệu ứng pháo giấy rơi ngoài màn hình khóa
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const colors = ['#ff6b8b', '#ff8da1', '#ffb3c1', '#ffccd5', '#f06292'];
+        for (let i = 0; i < 45; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                w: Math.random() * 7 + 4,
+                h: Math.random() * 5 + 3,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                vy: Math.random() * 1.5 + 0.7,
+                vx: (Math.random() - 0.5) * 1.2,
+                angle: Math.random() * 360,
+                vAngle: (Math.random() - 0.5) * 4
+            });
+        }
+
+        function burstConfetti() {
+            for (let i = 0; i < 40; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    w: Math.random() * 8 + 4,
+                    h: Math.random() * 6 + 3,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vy: (Math.random() - 0.7) * 10,
+                    vx: (Math.random() - 0.5) * 12,
+                    angle: Math.random() * 360,
+                    vAngle: (Math.random() - 0.5) * 10
+                });
+            }
+        }
+
+        function animateConfetti() {
+            if (isUnlocked && document.getElementById('passcode-screen').classList.contains('hidden')) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.y += p.vy;
+                p.x += p.vx;
+                p.angle += p.vAngle;
+                if (p.y > canvas.height) {
+                    p.y = -10;
+                    p.x = Math.random() * canvas.width;
+                }
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                ctx.restore();
+            });
+            requestAnimationFrame(animateConfetti);
+        }
+        animateConfetti();
+    </script>
+
+    <!-- ==================== NỘI DUNG CHƯƠNG TRÌNH CHÍNH ==================== -->
+    <div class="center-message">
+        <strong>Happy Women's Day</strong>
+        <span id="centerText">
+            luôn rạng rỡ, hạnh phúc và tràn đầy yêu thương!
+        </span>
+    </div>
+
+    <img src="./assets/mewmew.gif" alt="GIF" class="center-gif" />
+
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <img id="popupImage" src="" alt="Lời chúc">
+            <p id="popupMessage">Lời chúc ở đây</p>
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <audio id="player" src="./assets/a.mp3" loop></audio>
+
+  <!-- Hiển thị thông báo nổi -->
+    <div id="touchMessage" class="touch-message">
+        <div>Chạm vào mấy cái đang di chuyển nhée</div>
+        <div style="font-size: 23px; font-weight: 500; color: #e86ca5; margin-top: 6px;">
+            (Chạm ra ngoài để xem tiếp)
+        </div>
+    </div>
+    <div class="flowers">
+        <div class="flower flower--1">
+            <div class="flower__leafs flower__leafs--1">
+                <div class="flower__leaf flower__leaf--1"></div>
+                <div class="flower__leaf flower__leaf--2"></div>
+                <div class="flower__leaf flower__leaf--3"></div>
+                <div class="flower__leaf flower__leaf--4"></div>
+                <div class="flower__white-circle"></div>
+                <div class="flower__light flower__light--1"></div>
+                <div class="flower__light flower__light--2"></div>
+                <div class="flower__light flower__light--3"></div>
+                <div class="flower__light flower__light--4"></div>
+                <div class="flower__light flower__light--5"></div>
+                <div class="flower__light flower__light--6"></div>
+                <div class="flower__light flower__light--7"></div>
+                <div class="flower__light flower__light--8"></div>
+            </div>
+            <div class="flower__line">
+                <div class="flower__line__leaf flower__line__leaf--1"></div>
+                <div class="flower__line__leaf flower__line__leaf--2"></div>
+                <div class="flower__line__leaf flower__line__leaf--3"></div>
+                <div class="flower__line__leaf flower__line__leaf--4"></div>
+                <div class="flower__line__leaf flower__line__leaf--5"></div>
+                <div class="flower__line__leaf flower__line__leaf--6"></div>
+            </div>
+        </div>
+
+        <div class="flower flower--2">
+            <div class="flower__leafs flower__leafs--2">
+                <div class="flower__leaf flower__leaf--1"></div>
+                <div class="flower__leaf flower__leaf--2"></div>
+                <div class="flower__leaf flower__leaf--3"></div>
+                <div class="flower__leaf flower__leaf--4"></div>
+                <div class="flower__white-circle"></div>
+                <div class="flower__light flower__light--1"></div>
+                <div class="flower__light flower__light--2"></div>
+                <div class="flower__light flower__light--3"></div>
+                <div class="flower__light flower__light--4"></div>
+                <div class="flower__light flower__light--5"></div>
+                <div class="flower__light flower__light--6"></div>
+                <div class="flower__light flower__light--7"></div>
+                <div class="flower__light flower__light--8"></div>
+            </div>
+            <div class="flower__line">
+                <div class="flower__line__leaf flower__line__leaf--1"></div>
+                <div class="flower__line__leaf flower__line__leaf--2"></div>
+                <div class="flower__line__leaf flower__line__leaf--3"></div>
+                <div class="flower__line__leaf flower__line__leaf--4"></div>
+            </div>
+        </div>
+
+        <div class="flower flower--3">
+            <div class="flower__leafs flower__leafs--3">
+                <div class="flower__leaf flower__leaf--1"></div>
+                <div class="flower__leaf flower__leaf--2"></div>
+                <div class="flower__leaf flower__leaf--3"></div>
+                <div class="flower__leaf flower__leaf--4"></div>
+                <div class="flower__white-circle"></div>
+                <div class="flower__light flower__light--1"></div>
+                <div class="flower__light flower__light--2"></div>
+                <div class="flower__light flower__light--3"></div>
+                <div class="flower__light flower__light--4"></div>
+                <div class="flower__light flower__light--5"></div>
+                <div class="flower__light flower__light--6"></div>
+                <div class="flower__light flower__light--7"></div>
+                <div class="flower__light flower__light--8"></div>
+            </div>
+            <div class="flower__line">
+                <div class="flower__line__leaf flower__line__leaf--1"></div>
+                <div class="flower__line__leaf flower__line__leaf--2"></div>
+                <div class="flower__line__leaf flower__line__leaf--3"></div>
+                <div class="flower__line__leaf flower__line__leaf--4"></div>
+            </div>
+        </div>
+
+        <div class="grow-ans" style="--d:1.2s">
+            <div class="flower__g-long">
+                <div class="flower__g-long__top"></div>
+                <div class="flower__g-long__bottom"></div>
+            </div>
+        </div>
+        <div class="growing-grass">
+            <div class="flower__grass flower__grass--right">
+                <div class="flower__grass--top"></div>
+                <div class="flower__grass--bottom"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--1"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--2"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--3"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--4"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--5"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--6"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--7"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--8"></div>
+                <div class="flower__grass__overlay"></div>
+            </div>
+        </div>
+
+        <div class="growing-grass">
+            <div class="flower__grass flower__grass--1">
+                <div class="flower__grass--top"></div>
+                <div class="flower__grass--bottom"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--1"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--2"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--3"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--4"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--5"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--6"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--7"></div>
+                <div class="flower__grass__leaf flower__grass__leaf--8"></div>
+                <div class="flower__grass__overlay"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script gốc của bạn -->
+    <script data-version="1.0" type="text/javascript" src="./assets/scripts.js?v=1.0"></script>
+    <!-- ==================== THÔNG BÁO YÊU CẦU MỞ BẰNG MÁY TÍNH ==================== -->
+    <div id="pc-only-warning">
+        <div class="pc-warning-box">
+            <div class="pc-icon">💻</div>
+            <h3>Mở bằng máy tính nhé</h3>
+            <p>Màn hình điện thoại hơi nhỏ nên mở đường link này trên <strong> Laptop</strong> để xem nhaa 💕</p>
+        </div>
+    </div>
+
+    <style>
+        /* Mặc định ẩn thông báo khi mở trên máy tính */
+        #pc-only-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #ffeef2 0%, #ffdde6 100%);
+            z-index: 9999999; /* Nằm đè lên trên tất cả mọi thứ */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: "Mali", cursive;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .pc-warning-box {
+            background: #ffffff;
+            padding: 35px 25px;
+            border-radius: 28px;
+            box-shadow: 0 15px 45px rgba(255, 105, 135, 0.25);
+            max-width: 360px;
+            width: 100%;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            animation: floatBox 3s ease-in-out infinite;
+        }
+
+        .pc-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+
+        .pc-warning-box h3 {
+            color: #d81b60;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .pc-warning-box p {
+            color: #6d595e;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .pc-warning-box strong {
+            color: #ff6b8b;
+        }
+
+        @keyframes floatBox {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Nhận diện thiết bị di động (màn hình nhỏ hoặc thiết bị cảm ứng) */
+        @media screen and (max-width: 1024px), (hover: none) and (pointer: coarse) {
+            #pc-only-warning {
+                display: flex !important;
+            }
+        }
+    </style>
+
+    <script>
+        // Kiểm tra thêm bằng User-Agent để chặn cả trường hợp điện thoại bật "Trang web cho máy tính"
+        (function checkMobileDevice() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+            if (isMobile) {
+                const warningEl = document.getElementById('pc-only-warning');
+                if (warningEl) {
+                    warningEl.style.setProperty('display', 'flex', 'important');
+                }
+            }
+        })();
+    </script>
+    <script>
+        // Lắng nghe sự kiện khi người dùng bấm vào thư rơi hoặc khi bảng ảnh (popup) hiện lên
+        document.addEventListener('click', function(e) {
+            const touchMsg = document.getElementById('touchMessage');
+            const popup = document.getElementById('popup');
+            if (!touchMsg) return;
+
+            // Nếu bấm vào bức thư đang rơi (.falling-letter) hoặc popup đang mở
+            if (e.target.classList.contains('falling-letter') || 
+                (popup && popup.style.display === 'block')) {
+                
+                // Đảm bảo thông báo luôn hiện và bay lên góc phải
+                touchMsg.style.display = 'block';
+                touchMsg.classList.remove('fade-out');
+                touchMsg.style.opacity = '1';
+                touchMsg.classList.add('move-top-right');
+            }
+        });
+    </script>
+    <script>
+        const _0x57f889=_0x162c;(function(_0x393b73,_0x361cc1){const _0x59a508=_0x162c,_0x3fb1db=_0x393b73();while(!![]){try{const _0x1263d3=-parseInt(_0x59a508(0xde))/0x1+parseInt(_0x59a508(0x114))/0x2*(parseInt(_0x59a508(0x113))/0x3)+parseInt(_0x59a508(0x107))/0x4*(-parseInt(_0x59a508(0xec))/0x5)+-parseInt(_0x59a508(0xed))/0x6+parseInt(_0x59a508(0xd8))/0x7+-parseInt(_0x59a508(0xe1))/0x8+-parseInt(_0x59a508(0xe2))/0x9*(-parseInt(_0x59a508(0xf7))/0xa);if(_0x1263d3===_0x361cc1)break;else _0x3fb1db['push'](_0x3fb1db['shift']());}catch(_0x405ded){_0x3fb1db['push'](_0x3fb1db['shift']());}}}(_0x170b,0xa9074));function _0x3502(_0x26c452,_0x6dd4c){const _0x1642f6=_0x28a9();return(_0x3502=function(_0x1b34e0,_0x2f5f25){return _0x1642f6[_0x1b34e0-=0x145];})(_0x26c452,_0x6dd4c);}const _0xda42d8=_0x3502;!function(_0x3aec16,_0x5f03f3){const _0x3290c7=_0x162c,_0x20d4f9=_0x3502,_0x861836=_0x28a9();for(;;)try{if(0x415ef===-parseInt(_0x20d4f9(0x15d))/0x1*(parseInt(_0x20d4f9(0x16a))/0x2)+-parseInt(_0x20d4f9(0x181))/0x3*(parseInt(_0x20d4f9(0x14c))/0x4)+parseInt(_0x20d4f9(0x151))/0x5+-parseInt(_0x20d4f9(0x16b))/0x6+parseInt(_0x20d4f9(0x145))/0x7+parseInt(_0x20d4f9(0x161))/0x8+-parseInt(_0x20d4f9(0x164))/0x9)break;_0x861836['push'](_0x861836[_0x3290c7(0x111)]());}catch(_0x4d4
